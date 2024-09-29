@@ -86,6 +86,7 @@ export const usePositionStream = (
   });
   //
 
+  // Refresh Algo orders from useOrderStream & active position from "v1/positions"
   const refreshAlgoAndPosition = () => {
     refresh();
     refreshPositions();
@@ -345,6 +346,7 @@ export const usePositionStream = (
       // showSymbol,
       error,
       // loadMore: () => {},
+      // Replace refresh function from v1/positions with new refresh function
       refresh: refreshAlgoAndPosition,
     },
   ] as const;

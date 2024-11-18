@@ -1,21 +1,48 @@
-import { useEffect, useRef, useState } from "react";
-import { useQuery } from "../useQuery";
+import { useEffect, useState } from "react";
 import { useConfig } from "../useConfig";
+import { useQuery } from "../useQuery";
 import { useWS } from "../useWS";
 
 const oneDay = 1000 * 60 * 60 * 24;
 
+enum MaintenanceStatus {
+  OPERATIONAL = 0,
+  MAINTENANCE = 2,
+}
+
+interface SystemInfo {
+  data: {
+    status: MaintenanceStatus;
+    scheduled_maintenance?: {
+      start_time: number;
+      end_time: number;
+    };
+  };
+}
+
+interface MaintenanceMessage {
+  status: MaintenanceStatus;
+  scheduled_maintenance?: {
+    start_time: number;
+    end_time: number;
+  };
+}
+
 export function useMaintenanceStatus() {
-  // 0 for nothing,  2 for maintenance
-  const [status, setStatus] = useState<number>(0);
+  const [status, setStatus] = useState<MaintenanceStatus>(
+    MaintenanceStatus.OPERATIONAL
+  );
   const [startTime, setStartTime] = useState<number>();
   const [endTime, setEndTime] = useState<number>();
   const [brokerName, setBrokerName] = useState<string>("Orderly network");
-  const { data: systemInfo, mutate } = useQuery<any>(`/v1/public/system_info`, {
-    revalidateOnFocus: false,
-    errorRetryCount: 2,
-    errorRetryInterval: 200,
-  });
+  const { data: systemInfo, mutate } = useQuery<SystemInfo>(
+    `/v1/public/system_info`,
+    {
+      revalidateOnFocus: false,
+      errorRetryCount: 2,
+      errorRetryInterval: 200,
+    }
+  );
   const ws = useWS();
 
   const config = useConfig();
@@ -33,14 +60,14 @@ export function useMaintenanceStatus() {
       setStartTime(systemInfo.data.scheduled_maintenance.start_time);
       setEndTime(systemInfo.data.scheduled_maintenance.end_time);
     }
-    if (systemInfo.data.status === 2) {
-      setStatus(2);
+    if (systemInfo.data.status === MaintenanceStatus.MAINTENANCE) {
+      setStatus(MaintenanceStatus.MAINTENANCE);
     }
   }, [systemInfo, config]);
 
   useEffect(() => {
     const unsubscribe = ws.subscribe(`maintenance_status`, {
-      onMessage: (message: any) => {
+      onMessage: (message: MaintenanceMessage) => {
         setStatus(message.status);
         console.log("-- ws maintenance_status", message);
         if (message.scheduled_maintenance) {

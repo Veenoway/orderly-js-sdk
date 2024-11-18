@@ -35,14 +35,11 @@ export function useMaintenanceStatus() {
   const [startTime, setStartTime] = useState<number>();
   const [endTime, setEndTime] = useState<number>();
   const [brokerName, setBrokerName] = useState<string>("Orderly network");
-  const { data: systemInfo, mutate } = useQuery<SystemInfo>(
-    `/v1/public/system_info`,
-    {
-      revalidateOnFocus: false,
-      errorRetryCount: 2,
-      errorRetryInterval: 200,
-    }
-  );
+  const { data: systemInfo } = useQuery<SystemInfo>(`/v1/public/system_info`, {
+    revalidateOnFocus: false,
+    errorRetryCount: 2,
+    errorRetryInterval: 200,
+  });
   const ws = useWS();
 
   const config = useConfig();
